@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>White Canvas Tees – Custom T‑Shirts</title>
+    <meta
+      name="description"
+      content="Custom T‑shirts printed same day. White 100 % ringspun cotton tees for men, women and kids with full‑color DTG print. Free pickup."
+    />
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
+          'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <header class="p-6 text-center">
+      <h1 class="text-4xl font-bold mb-2">White Canvas Tees</h1>
+      <p class="text-lg text-gray-600">
+        Custom T‑shirts printed in full color · Same day print &amp; ship · Free pickup
+      </p>
+    </header>
+    <main class="max-w-xl mx-auto bg-white shadow-lg rounded-2xl p-6">
+      <h2 class="text-2xl font-semibold mb-4">Customize your shirt</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block mb-1 font-medium" for="product">Product</label>
+          <select id="product" class="w-full border rounded p-2">
+            <option value="Men">Men</option>
+            <option value="Women">Women</option>
+            <option value="Kids">Kids</option>
+          </select>
+        </div>
+        <div>
+          <label class="block mb-1 font-medium" for="size">Size</label>
+          <select id="size" class="w-full border rounded p-2">
+            <option>XS</option>
+            <option>S</option>
+            <option>M</option>
+            <option>L</option>
+            <option>XL</option>
+            <option>2XL</option>
+            <option>3XL</option>
+            <option>4XL</option>
+            <option>5XL</option>
+          </select>
+        </div>
+        <div>
+          <label class="block mb-1 font-medium" for="quantity">Quantity</label>
+          <input
+            type="number"
+            id="quantity"
+            min="1"
+            value="1"
+            class="w-full border rounded p-2"
+          />
+        </div>
+        <div class="flex items-center">
+          <input type="checkbox" id="backPrint" class="mr-2" />
+          <label for="backPrint" class="font-medium">Add back print (+$7)</label>
+        </div>
+        <div>
+          <label class="block mb-1 font-medium" for="file">Upload artwork</label>
+          <input
+            type="file"
+            id="file"
+            accept=".png,.jpg,.jpeg,.pdf"
+            class="w-full"
+          />
+          <div id="uploadStatus" class="mt-2 text-sm"></div>
+        </div>
+      </div>
+      <div class="mt-6 bg-gray-100 p-4 rounded-lg">
+        <p>
+          <span class="font-medium">Unit price:</span>
+          <span id="unitPrice">$10.00</span>
+        </p>
+        <p>
+          <span class="font-medium">Total:</span>
+          <span id="totalPrice">$10.00</span>
+        </p>
+      </div>
+      <p class="mt-4 text-sm text-gray-500">
+        Note: An additional $5 is added for sizes 2XL–5XL.
+      </p>
+    </main>
+    <footer class="mt-12 text-center text-sm text-gray-400">
+      ©
+      <span id="year"></span>
+      White Canvas Tees. All rights reserved.
+    </footer>
+    <script>
+      // Set current year
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // Pricing logic
+      const sizeSelect = document.getElementById('size');
+      const quantityInput = document.getElementById('quantity');
+      const backPrintCheckbox = document.getElementById('backPrint');
+      const unitPriceElem = document.getElementById('unitPrice');
+      const totalPriceElem = document.getElementById('totalPrice');
+      const uploadStatus = document.getElementById('uploadStatus');
+
+      function computeUnitPrice() {
+        let price = 10;
+        if (backPrintCheckbox.checked) price += 7;
+        const size = sizeSelect.value;
+        if (['2XL', '3XL', '4XL', '5XL'].includes(size)) price += 5;
+        return price;
+      }
+
+      function updatePrices() {
+        const unit = computeUnitPrice();
+        const quantity = parseInt(quantityInput.value) || 1;
+        unitPriceElem.textContent = `$${unit.toFixed(2)}`;
+        totalPriceElem.textContent = `$${(unit * quantity).toFixed(2)}`;
+      }
+
+      sizeSelect.addEventListener('change', updatePrices);
+      quantityInput.addEventListener('input', updatePrices);
+      backPrintCheckbox.addEventListener('change', updatePrices);
+      updatePrices();
+
+      // The upload endpoint is relative to the current origin when served by Express.
+      const UPLOAD_ENDPOINT = '/api/upload';
+
+      // Handle file upload
+      document.getElementById('file').addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        uploadStatus.textContent = 'Uploading…';
+        uploadStatus.className = 'mt-2 text-sm text-blue-600';
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const meta = {
+            product: document.getElementById('product').value,
+            size: sizeSelect.value,
+            quantity: parseInt(quantityInput.value) || 1,
+            backPrint: backPrintCheckbox.checked,
+          };
+          formData.append('meta', JSON.stringify(meta));
+          const response = await fetch(UPLOAD_ENDPOINT, {
+            method: 'POST',
+            body: formData,
+          });
+          if (!response.ok) throw new Error('Upload failed');
+          const data = await response.json();
+          uploadStatus.innerHTML =
+            '<span class="text-green-600">Uploaded! </span><a href="' +
+            data.webViewLink +
+            '" target="_blank" class="underline">View file</a>';
+          uploadStatus.className = 'mt-2 text-sm';
+        } catch (err) {
+          console.error(err);
+          uploadStatus.textContent = 'Failed to upload. Please try again.';
+          uploadStatus.className = 'mt-2 text-sm text-red-600';
+        }
+      });
+    </script>
+  </body>
+</html>
