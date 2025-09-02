@@ -5,6 +5,7 @@ import { google } from 'googleapis';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Readable } from 'stream';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -78,7 +79,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       },
       media: {
         mimeType: req.file.mimetype,
-        body: Buffer.from(req.file.buffer),
+        body: Readable.from(req.file.buffer),
       },
       fields: 'id, webViewLink',
     });
