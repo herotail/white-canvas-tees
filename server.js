@@ -12,21 +12,12 @@ dotenv.config();
 
 const app = express();
 
-// Configure CORS.  Only allow requests from explicitly configured origins.
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-  : [];
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like curl) or from allowed origins
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error('CORS not allowed'), false);
-    },
-  }),
-);
+// Configure CORS.  For this demo we allow requests from any origin. If you want
+// to restrict access to specific domains in production, configure the
+// `origin` option accordingly or set the ALLOWED_ORIGINS environment
+// variable and reinstate the more restrictive logic used previously.
+app.use(cors());
+
 
 // Configure multer for file uploads; limit file size via MAX_FILE_MB
 const maxBytes = parseInt(process.env.MAX_FILE_MB || '25', 10) * 1024 * 1024;
